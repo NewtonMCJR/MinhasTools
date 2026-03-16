@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhas Ferramentas | Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans min-h-screen p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-12 text-center">
+            <h1 class="text-4xl font-black text-gray-800 mb-3 tracking-tight">🛠️ Central de Ferramentas</h1>
+            <p class="text-gray-600 text-lg font-medium">Selecione o utilitário que deseja usar hoje.</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <a href="combo-pdfs.html" class="bg-white rounded-2xl shadow-md p-8 flex flex-col items-center text-center border-2 border-indigo-100 hover:shadow-xl hover:border-indigo-400 hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-indigo-500"></div>
+                <div class="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center text-4xl mb-5 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <h2 class="text-xl font-black text-gray-800 mb-2">Combo: Mesclar e Fatiar</h2>
+                <p class="text-sm text-gray-500">Intercale páginas ímpares/pares e já fatiadas em ZIP direto.</p>
+                <span class="mt-4 bg-indigo-100 text-indigo-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Mais Rápido</span>
+            </a>
+
+            <a href="mesclar-pdfs.html" class="bg-white rounded-2xl shadow-sm p-8 flex flex-col items-center text-center border border-gray-100 hover:shadow-xl hover:border-blue-300 hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Mesclar PDFs</h2>
+                <p class="text-sm text-gray-500">Intercale páginas de dois arquivos PDF e gere um documento único.</p>
+            </a>
+
+            <a href="dividir-pdfs.html" class="bg-white rounded-2xl shadow-sm p-8 flex flex-col items-center text-center border border-gray-100 hover:shadow-xl hover:border-green-300 hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-green-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="w-16 h-16 bg-green-50 text-green-600 rounded-full flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-scissors"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Fatiar PDFs</h2>
+                <p class="text-sm text-gray-500">Corte um PDF pela quantidade de páginas desejada e baixe tudo em um ZIP.</p>
+            </a>
+
+            <a href="unir-zip.html" class="bg-white rounded-2xl shadow-sm p-8 flex flex-col items-center text-center border border-gray-100 hover:shadow-xl hover:border-red-300 hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-red-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-file-export"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Unir PDFs do ZIP</h2>
+                <p class="text-sm text-gray-500">Extraia e mescle vários PDFs de um arquivo ZIP em um documento único.</p>
+            </a>
+
+            <a href="digitalizador-laminas.html" class="bg-white rounded-2xl shadow-sm p-8 flex flex-col items-center text-center border border-gray-100 hover:shadow-xl hover:border-teal-300 hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-teal-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="w-16 h-16 bg-teal-50 text-teal-600 rounded-full flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-microscope"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Leitor de Lâminas AI</h2>
+                <p class="text-sm text-gray-500">Extração inteligente de dados manuscritos (CDEPAT) para CSV.</p>
+            </a>
+
+            <a href="gerador-sql.html" class="bg-white rounded-2xl shadow-sm p-8 flex flex-col items-center text-center border border-gray-100 hover:shadow-xl hover:border-orange-300 hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-orange-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="w-16 h-16 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-database"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Gerador SQL Avançado</h2>
+                <p class="text-sm text-gray-500">Gere scripts de Update e Verificação de caixas em lote.</p>
+            </a>
+
+            <a href="formatador-texto.html" class="bg-white rounded-2xl shadow-sm p-8 flex flex-col items-center text-center border border-gray-100 hover:shadow-xl hover:border-purple-300 hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-purple-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="w-16 h-16 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-align-left"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Formatador de Texto</h2>
+                <p class="text-sm text-gray-500">Conte palavras e aplique formatações (maiúsculas, minúsculas, cortes) em lote.</p>
+            </a>
+
+        </div>
+        
+        <footer class="mt-16 text-center text-sm text-gray-400">
+            <p>Sistema de Ferramentas • Museu da Patologia</p>
+        </footer>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador SQL Avançado | Ferramentas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans min-h-screen p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <a href="index.html" class="inline-flex items-center text-orange-600 hover:text-orange-800 font-medium mb-6 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Voltar ao Painel
+        </a>
+
+        <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg border-t-4 border-orange-500">
+            
+            <header class="mb-6 flex items-center">
+                <i class="fa-solid fa-database mr-3 text-orange-200 bg-orange-600 rounded-lg p-3 text-xl shadow-sm"></i>
+                <div>
+                    <h1 class="text-2xl font-bold text-orange-700">Gerador SQL Avançado</h1>
+                    <p class="text-sm text-gray-500 mt-1">Gere scripts de Update e Verificação de caixas em lote.</p>
+                </div>
+            </header>
+
+            <div class="space-y-5 mb-6">
+                <div>
+                    <label class="block text-sm font-bold mb-2 text-gray-700" for="entrada">1. Cole a coluna do Sheets (IDs das caixas):</label>
+                    <textarea id="entrada" rows="5" placeholder="123&#10;456&#10;789" 
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 font-mono text-sm bg-gray-50"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold mb-2 text-gray-700" for="localizacao">2. Nova Localização:</label>
+                    <input type="text" id="localizacao" placeholder="Ex: FaCv" 
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50">
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 mb-8">
+                <button onclick="processar(false)" class="flex-1 bg-orange-50 text-orange-700 border border-orange-200 font-bold py-3 px-4 rounded-lg hover:bg-orange-100 transition duration-300">
+                    <i class="fa-solid fa-list-ol mr-2"></i> Apenas Lista (CSV)
+                </button>
+                <button onclick="processar(true)" class="flex-1 bg-orange-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-orange-700 shadow-md transition duration-300">
+                    <i class="fa-solid fa-code mr-2"></i> Gerar SQL Completo
+                </button>
+            </div>
+
+            <hr class="mb-6 border-gray-200">
+
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-1">
+                <div class="flex justify-between items-center p-3 bg-white rounded-t-lg border-b border-gray-100">
+                    <span class="font-bold text-gray-700 text-sm">Resultado SQL:</span>
+                    <button id="btnCopiar" onclick="copiarTexto()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold py-1.5 px-3 rounded transition-colors flex items-center">
+                        <i id="iconeCopiar" class="fa-regular fa-copy mr-1.5"></i> 
+                        <span id="textoCopiar">Copiar</span>
+                    </button>
+                </div>
+                <pre id="resultado" class="bg-gray-900 text-gray-100 p-4 rounded-b-lg border-l-4 border-orange-500 overflow-x-auto text-sm font-mono whitespace-pre-wrap break-all min-h-[100px]">Aguardando comando...</pre>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function processar(isSql) {
+            const rawInput = document.getElementById('entrada').value;
+            const local = document.getElementById('localizacao').value.trim() || "VALOR_LOCAL";
+            
+            const lista = rawInput.split(/\r?\n/)
+                                  .map(item => item.trim())
+                                  .filter(item => item !== "");
+
+            if (lista.length === 0) {
+                alert("Cole os dados da planilha primeiro!");
+                return;
+            }
+
+            const idsFormatados = lista.join(', ');
+
+            if (isSql) {
+                // 1. O comando de Update normal
+                let sql = `-- 1. ATUALIZAR LOCALIZAÇÃO\n`;
+                sql += `UPDATE cfa_caixas \nSET localizacao = '${local}' \nWHERE caixa IN (${idsFormatados});\n\n`;
+                
+                // 2. Lógica para mostrar o que NÃO existe no banco
+                sql += `-- 2. VERIFICAR CAIXAS NÃO ENCONTRADAS\n`;
+                sql += `SELECT val AS caixa_faltante \nFROM (\n`;
+                
+                // Cria a lista de valores para comparar com indentação melhorada
+                const valuesList = lista.map(id => `  SELECT ${id} AS val`).join('\n  UNION ALL\n');
+                
+                sql += `${valuesList}\n) AS lista_entrada\n`;
+                sql += `WHERE val NOT IN (SELECT caixa FROM cfa_caixas);`;
+
+                document.getElementById('resultado').innerText = sql;
+            } else {
+                document.getElementById('resultado').innerText = idsFormatados;
+            }
+            
+            // Reseta o botão de copiar caso tenha gerado um novo código
+            resetarBotaoCopia();
+        }
+
+        async function copiarTexto() {
+            const texto = document.getElementById('resultado').innerText;
+            const btn = document.getElementById('btnCopiar');
+            const icone = document.getElementById('iconeCopiar');
+            const textoBtn = document.getElementById('textoCopiar');
+
+            if (texto === "Aguardando comando..." || texto === "") return;
+            
+            try {
+                await navigator.clipboard.writeText(texto);
+                
+                // Efeito visual de sucesso no botão usando classes do Tailwind
+                btn.classList.remove('bg-gray-200', 'hover:bg-gray-300', 'text-gray-700');
+                btn.classList.add('bg-green-500', 'hover:bg-green-600', 'text-white');
+                icone.className = "fa-solid fa-check mr-1.5";
+                textoBtn.innerText = "Copiado!";
+                
+                setTimeout(() => {
+                    resetarBotaoCopia();
+                }, 2000);
+            } catch (err) {
+                alert("Erro ao copiar: " + err);
+            }
+        }
+
+        function resetarBotaoCopia() {
+            const btn = document.getElementById('btnCopiar');
+            const icone = document.getElementById('iconeCopiar');
+            const textoBtn = document.getElementById('textoCopiar');
+
+            btn.classList.remove('bg-green-500', 'hover:bg-green-600', 'text-white');
+            btn.classList.add('bg-gray-200', 'hover:bg-gray-300', 'text-gray-700');
+            icone.className = "fa-regular fa-copy mr-1.5";
+            textoBtn.innerText = "Copiar";
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fatiador de PDF | Ferramentas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans min-h-screen p-4 md:p-8">
+
+    <div class="max-w-2xl mx-auto">
+        <a href="index.html" class="inline-flex items-center text-green-600 hover:text-green-800 font-medium mb-6 transition-colors">
+            <i class="fa-solid fa-arrow-left mr-2"></i> Voltar ao Painel
+        </a>
+
+        <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg border-t-4 border-green-500">
+            
+            <header class="mb-8 text-center md:text-left flex flex-col md:flex-row items-center md:items-start gap-4">
+                <div class="w-16 h-16 bg-green-600 text-green-100 rounded-2xl flex items-center justify-center text-3xl shadow-md shrink-0">
+                    <i class="fa-solid fa-scissors"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black text-gray-800 tracking-tight">Fatiador de PDF</h1>
+                    <p class="text-green-600 font-bold uppercase text-xs tracking-widest mt-1">Divisão Automática de Documentos</p>
+                    <p class="text-sm text-gray-500 mt-2">Gere PDFs divididos pela quantidade de páginas desejada. O sistema fatia até o fim do documento.</p>
+                </div>
+            </header>
+
+            <div class="space-y-6">
+                <div class="group relative border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-green-400 hover:bg-green-50/50 transition-all cursor-pointer bg-gray-50">
+                    <input type="file" id="pdfBase" accept="application/pdf"
+                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                    <div class="space-y-3">
+                        <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform shadow-sm">
+                            <i class="fa-solid fa-file-pdf text-2xl text-green-600"></i>
+                        </div>
+                        <p id="fileName" class="text-gray-700 font-semibold">Arraste ou clique para enviar o PDF Base</p>
+                        <p class="text-gray-400 text-xs text-center font-medium">O arquivo único com todas as páginas</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <div class="w-full sm:w-1/2">
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-2 ml-1" for="numInicio">Nº Inicial (Caixa):</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fa-solid fa-hashtag text-gray-400"></i>
+                            </div>
+                            <input type="number" id="numInicio" placeholder="Ex: 642" 
+                                class="w-full pl-10 p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 transition-all outline-none font-mono text-sm text-gray-700">
+                        </div>
+                    </div>
+                    <div class="w-full sm:w-1/2">
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-2 ml-1" for="paginasPorArquivo">Páginas por Arquivo:</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fa-solid fa-file-lines text-gray-400"></i>
+                            </div>
+                            <input type="number" id="paginasPorArquivo" value="2" min="1"
+                                class="w-full pl-10 p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 transition-all outline-none font-mono text-sm text-gray-700">
+                        </div>
+                    </div>
+                </div>
+
+                <button id="btnProcessar" onclick="fatiarPDF()" 
+                    class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl shadow-md transform active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-file-zipper"></i> GERAR E BAIXAR ZIP
+                </button>
+
+                <div id="status" class="hidden text-center p-4 rounded-xl text-sm font-bold border mt-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('pdfBase');
+        const fileNameDisplay = document.getElementById('fileName');
+
+        // Atualiza a interface quando seleciona o arquivo
+        fileInput.addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (file) {
+                fileNameDisplay.innerHTML = `<span class="text-green-700 font-bold"><i class="fa-solid fa-check mr-1"></i> Selecionado:</span> ${file.name}`;
+            }
+        });
+
+        async function fatiarPDF() {
+            const inicio = parseInt(document.getElementById('numInicio').value);
+            const paginasPorArquivo = parseInt(document.getElementById('paginasPorArquivo').value);
+            const btn = document.getElementById('btnProcessar');
+
+            // Validações
+            if (fileInput.files.length === 0) {
+                mostrarStatus('<i class="fa-solid fa-triangle-exclamation mr-1"></i> Por favor, selecione o arquivo PDF base.', 'bg-orange-50 text-orange-700 border-orange-200');
+                return;
+            }
+            if (isNaN(inicio) || isNaN(paginasPorArquivo) || paginasPorArquivo < 1) {
+                mostrarStatus('<i class="fa-solid fa-circle-exclamation mr-1"></i> Verifique o Nº Inicial e a quantidade de Páginas por Arquivo.', 'bg-red-50 text-red-700 border-red-200');
+                return;
+            }
+
+            try {
+                // Atualiza UI
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> FATIANDO E COMPACTANDO...';
+                mostrarStatus('<i class="fa-solid fa-microchip mr-1"></i> Processando o PDF... Aguarde.', 'bg-blue-50 text-blue-700 border-blue-200 animate-pulse');
+
+                // Carrega o PDF original
+                const arrayBuffer = await fileInput.files[0].arrayBuffer();
+                const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+                const totalPages = pdfDoc.getPageCount();
+
+                // Prepara o ZIP
+                const zip = new JSZip();
+                let currentPage = 0;
+                let numCaixa = inicio;
+
+                // Loop que roda até acabarem as páginas do PDF
+                while (currentPage < totalPages) {
+                    const newPdf = await PDFLib.PDFDocument.create();
+
+                    // Adiciona a quantidade de páginas escolhida pelo usuário
+                    for (let p = 0; p < paginasPorArquivo; p++) {
+                        if (currentPage < totalPages) {
+                            const [page] = await newPdf.copyPages(pdfDoc, [currentPage]);
+                            newPdf.addPage(page);
+                            currentPage++;
+                        }
+                    }
+
+                    // Salva o PDF fatiado e adiciona ao ZIP com o número atual da caixa
+                    const pdfBytes = await newPdf.save();
+                    zip.file(`Cx_${numCaixa}.pdf`, pdfBytes);
+                    
+                    // Incrementa para o nome do próximo arquivo
+                    numCaixa++;
+                }
+
+                // Gera o arquivo ZIP
+                const zipBlob = await zip.generateAsync({ type: 'blob' });
+                
+                // Força o download do ZIP
+                const url = URL.createObjectURL(zipBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                // O nome do arquivo zip vai indicar qual foi a caixa inicial e a final (numCaixa - 1)
+                a.download = `Caixas_${inicio}_ate_${numCaixa - 1}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                
+                // Limpeza
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                mostrarStatus('<i class="fa-solid fa-check-circle mr-1"></i> Pronto! Arquivo ZIP gerado com sucesso.', 'bg-green-50 text-green-700 border-green-200');
+
+            } catch (error) {
+                console.error(error);
+                mostrarStatus('<i class="fa-solid fa-circle-xmark mr-1"></i> Ocorreu um erro ao fatiar o PDF.', 'bg-red-50 text-red-700 border-red-200');
+            } finally {
+                // Restaura o botão
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-file-zipper"></i> GERAR E BAIXAR ZIP';
+            }
+        }
+
+        function mostrarStatus(mensagem, classesCor) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = mensagem;
+            statusDiv.className = `text-center p-4 rounded-xl text-sm font-bold border mt-4 block ${classesCor}`;
+            
+            // Remove o display 'none' (hidden) para exibir o aviso
+            statusDiv.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

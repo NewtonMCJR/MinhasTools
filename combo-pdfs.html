@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Combo: Mesclar e Fatiar | Ferramentas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans min-h-screen p-4 md:p-8">
+
+    <div class="max-w-3xl mx-auto">
+        <a href="index.html" class="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium mb-6 transition-colors">
+            <i class="fa-solid fa-arrow-left mr-2"></i> Voltar ao Painel
+        </a>
+
+        <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg border-t-4 border-indigo-500">
+            
+            <header class="mb-8 text-center md:text-left flex flex-col md:flex-row items-center md:items-start gap-4">
+                <div class="w-16 h-16 bg-indigo-600 text-indigo-100 rounded-2xl flex items-center justify-center text-3xl shadow-md shrink-0">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black text-gray-800 tracking-tight">Combo: Mesclar e Fatiar</h1>
+                    <p class="text-indigo-600 font-bold uppercase text-xs tracking-widest mt-1">Processamento Dinâmico em Lote</p>
+                    <p class="text-sm text-gray-500 mt-2">O sistema intercala as páginas ímpares e pares e já fatia em arquivos separados. O processo roda automaticamente até a última página.</p>
+                </div>
+            </header>
+
+            <div class="space-y-6">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="group relative border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-indigo-400 hover:bg-indigo-50/50 transition-all cursor-pointer bg-gray-50 flex flex-col justify-center h-48">
+                        <input type="file" id="pdf1" accept="application/pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                        <div class="space-y-2">
+                            <div class="bg-indigo-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform shadow-sm">
+                                <i class="fa-solid fa-file-pdf text-xl text-indigo-600"></i>
+                            </div>
+                            <p id="fileName1" class="text-gray-700 font-semibold text-sm">PDF 1 (Pág. Ímpares)</p>
+                            <p class="text-gray-400 text-xs text-center font-medium">Arraste ou clique para enviar</p>
+                        </div>
+                    </div>
+
+                    <div class="group relative border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-indigo-400 hover:bg-indigo-50/50 transition-all cursor-pointer bg-gray-50 flex flex-col justify-center h-48">
+                        <input type="file" id="pdf2" accept="application/pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                        <div class="space-y-2">
+                            <div class="bg-indigo-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform shadow-sm">
+                                <i class="fa-solid fa-file-pdf text-xl text-indigo-600"></i>
+                            </div>
+                            <p id="fileName2" class="text-gray-700 font-semibold text-sm">PDF 2 (Pág. Pares)</p>
+                            <p class="text-gray-400 text-xs text-center font-medium">Arraste ou clique para enviar</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    <div class="w-full sm:w-1/2">
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-2 ml-1" for="numInicio">Nº Inicial (Caixa):</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fa-solid fa-hashtag text-gray-400"></i>
+                            </div>
+                            <input type="number" id="numInicio" placeholder="Ex: 642" 
+                                class="w-full pl-10 p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-all outline-none font-mono text-sm text-gray-700 shadow-sm">
+                        </div>
+                    </div>
+                    <div class="w-full sm:w-1/2">
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-2 ml-1" for="paginasPorArquivo">Páginas por Arquivo:</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fa-solid fa-file-lines text-gray-400"></i>
+                            </div>
+                            <input type="number" id="paginasPorArquivo" value="2" min="1"
+                                class="w-full pl-10 p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-all outline-none font-mono text-sm text-gray-700 shadow-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <button id="btnCombo" onclick="processarCombo()" 
+                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-xl shadow-md transform active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-boxes-packing"></i> PROCESSAR COMBO E BAIXAR ZIP
+                </button>
+
+                <div id="status" class="hidden text-center p-4 rounded-xl text-sm font-bold border mt-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Atualiza a interface quando seleciona os arquivos
+        document.getElementById('pdf1').addEventListener('change', e => {
+            if (e.target.files[0]) {
+                document.getElementById('fileName1').innerHTML = `<span class="text-indigo-700 font-bold"><i class="fa-solid fa-check mr-1"></i></span> ${e.target.files[0].name}`;
+            }
+        });
+
+        document.getElementById('pdf2').addEventListener('change', e => {
+            if (e.target.files[0]) {
+                document.getElementById('fileName2').innerHTML = `<span class="text-indigo-700 font-bold"><i class="fa-solid fa-check mr-1"></i></span> ${e.target.files[0].name}`;
+            }
+        });
+
+        async function processarCombo() {
+            const fileInput1 = document.getElementById('pdf1');
+            const fileInput2 = document.getElementById('pdf2');
+            const inicio = parseInt(document.getElementById('numInicio').value);
+            const paginasPorArquivo = parseInt(document.getElementById('paginasPorArquivo').value);
+            const btn = document.getElementById('btnCombo');
+
+            // Validações
+            if (fileInput1.files.length === 0 || fileInput2.files.length === 0) {
+                mostrarStatus('<i class="fa-solid fa-triangle-exclamation mr-1"></i> Por favor, selecione os dois arquivos PDF.', 'bg-orange-50 text-orange-700 border-orange-200');
+                return;
+            }
+            if (isNaN(inicio) || isNaN(paginasPorArquivo) || paginasPorArquivo < 1) {
+                mostrarStatus('<i class="fa-solid fa-circle-exclamation mr-1"></i> Verifique o Nº Inicial e a quantidade de Páginas por Arquivo.', 'bg-red-50 text-red-700 border-red-200');
+                return;
+            }
+
+            try {
+                // Atualiza UI
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> PROCESSANDO COMBO...';
+                mostrarStatus('<i class="fa-solid fa-microchip mr-1"></i> Analisando e empacotando os PDFs... Aguarde.', 'bg-indigo-50 text-indigo-700 border-indigo-200 animate-pulse');
+
+                // Lendo os arquivos originais
+                const arrayBuffer1 = await fileInput1.files[0].arrayBuffer();
+                const arrayBuffer2 = await fileInput2.files[0].arrayBuffer();
+
+                const pdfDoc1 = await PDFLib.PDFDocument.load(arrayBuffer1);
+                const pdfDoc2 = await PDFLib.PDFDocument.load(arrayBuffer2);
+
+                const count1 = pdfDoc1.getPageCount();
+                const count2 = pdfDoc2.getPageCount();
+
+                const zip = new JSZip();
+                
+                let p1_idx = 0; // Índice atual da página no PDF 1
+                let p2_idx = 0; // Índice atual da página no PDF 2
+                let next_source = 1; // Controla de qual PDF puxar a próxima página (1 ou 2)
+                let numCaixa = inicio;
+
+                // O loop roda enquanto houver páginas em qualquer um dos dois PDFs
+                while (p1_idx < count1 || p2_idx < count2) {
+                    const newPdf = await PDFLib.PDFDocument.create();
+                    let pagesAdded = 0; // Controla se adicionamos alguma página neste loop
+
+                    // Tenta adicionar a quantidade de páginas escolhida pelo usuário
+                    for (let p = 0; p < paginasPorArquivo; p++) {
+                        
+                        // Lógica de intercalação inteligente
+                        if (next_source === 1 && p1_idx < count1) {
+                            const [page] = await newPdf.copyPages(pdfDoc1, [p1_idx]);
+                            newPdf.addPage(page);
+                            p1_idx++;
+                            next_source = 2; // Na próxima, puxa do PDF 2
+                            pagesAdded++;
+                        } else if (next_source === 2 && p2_idx < count2) {
+                            const [page] = await newPdf.copyPages(pdfDoc2, [p2_idx]);
+                            newPdf.addPage(page);
+                            p2_idx++;
+                            next_source = 1; // Na próxima, puxa do PDF 1
+                            pagesAdded++;
+                        } else if (p1_idx < count1) {
+                            // Se o PDF 2 acabou, mas o PDF 1 ainda tem página
+                            const [page] = await newPdf.copyPages(pdfDoc1, [p1_idx]);
+                            newPdf.addPage(page);
+                            p1_idx++;
+                            pagesAdded++;
+                        } else if (p2_idx < count2) {
+                            // Se o PDF 1 acabou, mas o PDF 2 ainda tem página
+                            const [page] = await newPdf.copyPages(pdfDoc2, [p2_idx]);
+                            newPdf.addPage(page);
+                            p2_idx++;
+                            pagesAdded++;
+                        } else {
+                            // Acabaram-se os dois PDFs
+                            break; 
+                        }
+                    }
+
+                    // Se adicionou pelo menos 1 página, salva o arquivo no ZIP
+                    if (pagesAdded > 0) {
+                        const pdfBytes = await newPdf.save();
+                        zip.file(`Cx_${numCaixa}.pdf`, pdfBytes);
+                        numCaixa++;
+                    }
+                }
+
+                // Gera o ZIP final
+                const zipBlob = await zip.generateAsync({ type: 'blob' });
+                
+                // Efetua o download
+                const url = URL.createObjectURL(zipBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                // O nome reflete a caixa inicial e a última caixa gerada
+                a.download = `Combo_Caixas_${inicio}_ate_${numCaixa - 1}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                mostrarStatus('<i class="fa-solid fa-check-circle mr-1"></i> SUCESSO! ZIP gerado com todas as caixas combinadas e separadas.', 'bg-green-50 text-green-700 border-green-200');
+
+            } catch (error) {
+                console.error(error);
+                mostrarStatus('<i class="fa-solid fa-circle-xmark mr-1"></i> Erro ao processar. Verifique se os PDFs não estão corrompidos.', 'bg-red-50 text-red-700 border-red-200');
+            } finally {
+                // Restaura o botão
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-boxes-packing"></i> PROCESSAR COMBO E BAIXAR ZIP';
+            }
+        }
+
+        function mostrarStatus(mensagem, classesCor) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = mensagem;
+            statusDiv.className = `text-center p-4 rounded-xl text-sm font-bold border mt-4 block ${classesCor}`;
+            
+            // Remove o display hidden para o aviso aparecer
+            statusDiv.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
