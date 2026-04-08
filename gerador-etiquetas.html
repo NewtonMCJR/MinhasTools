@@ -11,7 +11,7 @@
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans min-h-screen p-4 md:p-8">
 
-    <div class="max-w-2xl mx-auto">
+    <div class="max-w-3xl mx-auto">
         <a href="index.html" class="inline-flex items-center text-amber-600 hover:text-amber-800 font-medium mb-6 transition-colors">
             <i class="fa-solid fa-arrow-left mr-2"></i> Voltar ao Painel
         </a>
@@ -23,15 +23,29 @@
                     <i class="fa-solid fa-tags"></i>
                 </div>
                 <div>
-                    <h1 class="text-2xl font-black text-gray-800 tracking-tight">Gerador de Etiquetas (Caixas)</h1>
-                    <p class="text-amber-600 font-bold uppercase text-xs tracking-widest mt-1">Medida Exata: 7,5 x 1,8 cm</p>
-                    <p class="text-sm text-gray-500 mt-2">Layout otimizado: Numeração à esquerda, Código de Barras à direita e borda completa para corte e alinhamento.</p>
+                    <h1 class="text-2xl font-black text-gray-800 tracking-tight">Gerador de Etiquetas</h1>
+                    <p class="text-amber-600 font-bold uppercase text-xs tracking-widest mt-1">CDEPAT • Código de Barras</p>
+                    <p class="text-sm text-gray-500 mt-2">Gere o PDF das etiquetas. Escolha entre imprimir em folha lisa com bordas para corte, ou direto no gabarito Pimaco 6085.</p>
                 </div>
             </header>
 
             <div class="space-y-6">
-                <div class="flex flex-col sm:flex-row gap-4 bg-gray-50 p-6 rounded-xl border border-gray-200">
-                    <div class="w-full sm:w-1/2">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-gray-50 p-6 rounded-xl border border-gray-200">
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-2 ml-1" for="tipoPapel">Tipo de Papel/Formato:</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fa-solid fa-scroll text-gray-400"></i>
+                            </div>
+                            <select id="tipoPapel" class="w-full pl-10 p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 transition-all outline-none font-mono text-sm text-gray-700 shadow-sm appearance-none">
+                                <option value="a4">Folha A4 Lisa (7,5x1,8cm)</option>
+                                <option value="pimaco6085" selected>Pimaco 6085 (Gabarito Exato)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-2 ml-1" for="numInicio">Nº Inicial da Caixa:</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -41,13 +55,14 @@
                                 class="w-full pl-10 p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 transition-all outline-none font-mono text-sm text-gray-700 shadow-sm">
                         </div>
                     </div>
-                    <div class="w-full sm:w-1/2">
-                        <label class="block text-xs font-bold text-gray-600 uppercase mb-2 ml-1" for="qtdEtiquetas">Quantidade (Total):</label>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-2 ml-1" for="qtdEtiquetas">Quantidade Total:</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <i class="fa-solid fa-layer-group text-gray-400"></i>
                             </div>
-                            <input type="number" id="qtdEtiquetas" placeholder="Ex: 32" value="32" min="1"
+                            <input type="number" id="qtdEtiquetas" placeholder="Ex: 30" value="30" min="1"
                                 class="w-full pl-10 p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 transition-all outline-none font-mono text-sm text-gray-700 shadow-sm">
                         </div>
                     </div>
@@ -67,6 +82,7 @@
 
     <script>
         async function gerarEtiquetas() {
+            const tipoPapel = document.getElementById('tipoPapel').value;
             const inicio = parseInt(document.getElementById('numInicio').value);
             const qtd = parseInt(document.getElementById('qtdEtiquetas').value);
             const btn = document.getElementById('btnProcessar');
@@ -79,91 +95,95 @@
             }
 
             try {
-                // Atualiza UI
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> GERANDO DOCUMENTO...';
-                mostrarStatus('<i class="fa-solid fa-microchip mr-1"></i> Calculando medidas e desenhando códigos... Aguarde.', 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse');
+                mostrarStatus('<i class="fa-solid fa-microchip mr-1"></i> Aplicando formatação do papel e gerando códigos...', 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse');
 
-                // Inicializa o jsPDF (A4 em milímetros, retrato)
+                // Variáveis de Configuração do Papel
+                let paperFormat, cols, rows, labelWidth, labelHeight, gapX, gapY, marginX, marginY, drawBorder;
+
+                if (tipoPapel === 'a4') {
+                    // Configuração: Folha A4 com bordas (75x18mm) - 32 Etiquetas
+                    paperFormat = "a4"; // 210 x 297 mm
+                    cols = 2;
+                    rows = 16;
+                    labelWidth = 75; 
+                    labelHeight = 18;
+                    gapX = 10;
+                    gapY = 0;
+                    
+                    const totalGridWidth = (cols * labelWidth) + ((cols - 1) * gapX);
+                    marginX = (210 - totalGridWidth) / 2;
+                    marginY = (297 - (rows * labelHeight)) / 2;
+                    drawBorder = true; // Imprime borda para corte manual
+                } else {
+                    // Configuração: Pimaco 6085 (Tamanho Carta: 215,9 x 279,4 mm) - 30 Etiquetas
+                    paperFormat = "letter";
+                    cols = 3;
+                    rows = 10;
+                    labelWidth = 66.7;
+                    labelHeight = 25.4;
+                    gapX = 2.5;  // Espaço horizontal entre as etiquetas Pimaco
+                    gapY = 0;    // Na 6085 não há espaço vertical entre as etiquetas
+                    marginX = 5.4; // Margem esquerda da folha
+                    marginY = 12.7; // Margem superior da folha (0.5 polegadas)
+                    drawBorder = false; // SEM borda, pois a folha já vem picotada/cortada
+                }
+
+                // Inicializa o jsPDF
                 const { jsPDF } = window.jspdf;
-                const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-
-                // Configurações da grade baseadas nas medidas solicitadas (75mm x 18mm)
-                // Numa folha A4 (210x297mm) cabem 2 colunas e 16 linhas com margens seguras.
-                const cols = 2;
-                const rows = 16;
-                
-                // Margens e Espaçamentos para centralizar a grade na folha
-                const labelWidth = 75; 
-                const labelHeight = 18;
-                const gapX = 10; // Espaço entre as duas colunas
-
-                // Cálculo automático das margens da folha para centralizar
-                const totalGridWidth = (cols * labelWidth) + ((cols - 1) * gapX);
-                const marginX = (210 - totalGridWidth) / 2; // Margem esquerda/direita
-                const marginY = (297 - (rows * labelHeight)) / 2; // Margem superior/inferior
+                const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: paperFormat });
 
                 let currentCol = 0;
                 let currentRow = 0;
 
                 for (let i = 0; i < qtd; i++) {
                     let numCaixa = inicio + i;
-                    // Formata para 4 dígitos, ex: 1 vira "0001"
-                    let strNum = String(numCaixa).padStart(4, '0');
+                    let strNum = String(numCaixa).padStart(4, '0'); // Ex: "0001"
 
-                    // Calcula a posição X e Y (canto superior esquerdo) da etiqueta atual
                     let x = marginX + (currentCol * labelWidth) + (currentCol * gapX);
-                    let y = marginY + (currentRow * labelHeight);
+                    let y = marginY + (currentRow * labelHeight) + (currentRow * gapY);
 
                     // --- DESENHO DA ETIQUETA ---
-
-                    // 1. Borda Completa (Caixa fechada nas 4 extremidades)
-                    doc.setLineWidth(0.3); // Espessura mais fina (antes era 0.8)
-                    doc.setDrawColor(0); // Cor preta
-                    doc.rect(x, y, labelWidth, labelHeight); // Desenha o retângulo ao redor de toda a etiqueta
                     
-                    // Reseta espessura para o padrão
-                    doc.setLineWidth(0.2); 
+                    // Desenha a borda (Apenas para A4 Lisa)
+                    if (drawBorder) {
+                        doc.setLineWidth(0.3);
+                        doc.setDrawColor(0);
+                        doc.rect(x, y, labelWidth, labelHeight);
+                        doc.setLineWidth(0.2); 
+                    }
 
-                    // 2. Textos (Alinhados à Esquerda)
-                    const textPaddingX = 5; // Recuo do texto em relação à borda esquerda
+                    // Configurações Específicas de Layout (Textos e Código) dependendo do Papel
+                    if (tipoPapel === 'a4') {
+                        // Layout 75x18 mm
+                        doc.setFontSize(8);
+                        doc.setFont("helvetica", "bold");
+                        doc.text("CDEPAT", x + 5, y + 6, { align: "left" });
 
-                    doc.setFontSize(8);
-                    doc.setFont("helvetica", "bold");
-                    // y+6 para centralizar verticalmente na primeira 'linha' da etiqueta de 18mm
-                    doc.text("CDEPAT", x + textPaddingX, y + 6, { align: "left" });
+                        doc.setFontSize(10);
+                        doc.setFont("helvetica", "normal");
+                        doc.text(`Caixa: ${strNum}`, x + 5, y + 13, { align: "left" });
 
-                    doc.setFontSize(10);
-                    doc.setFont("helvetica", "normal");
-                    // y+13 para a segunda 'linha'
-                    doc.text(`Caixa: ${strNum}`, x + textPaddingX, y + 13, { align: "left" });
-
-                    // 3. Código de Barras (Alinhado à Direita)
-                    // Gera o código de barras no canvas oculto
-                    JsBarcode(canvas, strNum, {
-                        format: "CODE128",
-                        displayValue: false, // Escondemos o texto do barcode pra usar o do jsPDF
-                        margin: 0,
-                        width: 4, // Aumenta densidade para leitura rápida
-                        height: 40 // Altura interna do desenho
-                    });
-
-                    // Converte canvas para imagem JPEG
-                    const barcodeDataURL = canvas.toDataURL("image/jpeg");
+                        JsBarcode(canvas, strNum, { format: "CODE128", displayValue: false, margin: 0, width: 4, height: 40 });
+                        const barcodeDataURL = canvas.toDataURL("image/jpeg");
+                        doc.addImage(barcodeDataURL, 'JPEG', x + labelWidth - 35 - 5, y + 3, 35, 12);
                     
-                    // Medidas da imagem do barcode dentro da etiqueta
-                    const barcodeWidth = 35;
-                    const barcodeHeight = 12; // Achatado para caber nos 18mm totais
-                    const barcodePaddingRight = 5; // Recuo em relação à borda direita
+                    } else {
+                        // Layout Pimaco 6085 (66,7 x 25,4 mm)
+                        doc.setFontSize(9);
+                        doc.setFont("helvetica", "bold");
+                        doc.text("CDEPAT", x + 4, y + 10, { align: "left" });
 
-                    // Calcula X para alinhar à direita
-                    const barcodeX = x + labelWidth - barcodeWidth - barcodePaddingRight;
-                    // Centraliza verticalmente o barcode (18mm total - 12mm barcode = 6mm sobrando / 2 = 3mm top)
-                    const barcodeY = y + 3;
+                        doc.setFontSize(11);
+                        doc.setFont("helvetica", "normal");
+                        doc.text(`Caixa: ${strNum}`, x + 4, y + 18, { align: "left" });
 
-                    // Insere imagem no PDF
-                    doc.addImage(barcodeDataURL, 'JPEG', barcodeX, barcodeY, barcodeWidth, barcodeHeight);
-
+                        // Para o Pimaco, a etiqueta é um pouco mais alta e menos larga
+                        JsBarcode(canvas, strNum, { format: "CODE128", displayValue: false, margin: 0, width: 4, height: 40 });
+                        const barcodeDataURL = canvas.toDataURL("image/jpeg");
+                        doc.addImage(barcodeDataURL, 'JPEG', x + 30, y + 6, 32, 14);
+                    }
 
                     // --- LÓGICA DE POSICIONAMENTO ---
                     currentCol++;
@@ -172,7 +192,7 @@
                         currentRow++;
                     }
 
-                    // Se preencheu a folha inteira (16 linhas) e ainda tem etiquetas, cria nova página
+                    // Se preencheu a folha inteira e ainda tem etiquetas, cria nova página
                     if (currentRow >= rows && i < qtd - 1) {
                         doc.addPage();
                         currentCol = 0;
@@ -180,17 +200,17 @@
                     }
                 }
 
-                // Salva o documento com nome dinâmico
+                // Salva o documento
                 const fim = inicio + qtd - 1;
-                doc.save(`Etiquetas_Caixas_${inicio}_ate_${fim}.pdf`);
+                const nomeArquivo = tipoPapel === 'a4' ? `Etiquetas_A4_${inicio}_ate_${fim}.pdf` : `Etiquetas_Pimaco_${inicio}_ate_${fim}.pdf`;
+                doc.save(nomeArquivo);
 
-                mostrarStatus('<i class="fa-solid fa-check-circle mr-1"></i> Sucesso! O PDF com as etiquetas na medida exata foi gerado.', 'bg-green-50 text-green-700 border-green-200');
+                mostrarStatus(`<i class="fa-solid fa-check-circle mr-1"></i> Sucesso! Seu PDF formatado para ${tipoPapel === 'a4' ? 'A4' : 'Pimaco 6085'} foi gerado.`, 'bg-green-50 text-green-700 border-green-200');
 
             } catch (error) {
                 console.error(error);
                 mostrarStatus('<i class="fa-solid fa-circle-xmark mr-1"></i> Ocorreu um erro técnico ao gerar o PDF.', 'bg-red-50 text-red-700 border-red-200');
             } finally {
-                // Restaura o botão
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa-solid fa-print"></i> GERAR PDF DE ETIQUETAS';
             }
