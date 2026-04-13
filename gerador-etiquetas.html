@@ -24,8 +24,8 @@
                 </div>
                 <div>
                     <h1 class="text-2xl font-black text-gray-800 tracking-tight">Gerador de Etiquetas</h1>
-                    <p class="text-amber-600 font-bold uppercase text-xs tracking-widest mt-1">CDEPAT • Código de Barras</p>
-                    <p class="text-sm text-gray-500 mt-2">Gere o PDF das etiquetas. Escolha entre imprimir em folha lisa com bordas para corte, ou direto no gabarito Pimaco 6085.</p>
+                    <p class="text-amber-600 font-bold uppercase text-xs tracking-widest mt-1">CDEPAT • Código de Barras (Lombada Vertical)</p>
+                    <p class="text-sm text-gray-500 mt-2">Gere o PDF das etiquetas. Numeração em pé (upright) e espaçada para leitura em caixas acondicionadas como livros.</p>
                 </div>
             </header>
 
@@ -39,8 +39,8 @@
                                 <i class="fa-solid fa-scroll text-gray-400"></i>
                             </div>
                             <select id="tipoPapel" class="w-full pl-10 p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 transition-all outline-none font-mono text-sm text-gray-700 shadow-sm appearance-none">
-                                <option value="a4">Folha A4 Lisa (7,5x1,8cm)</option>
-                                <option value="pimaco6085" selected>Pimaco 6085 (Gabarito Exato)</option>
+                                <option value="a4" selected>Folha A4 Lisa (7,5x1,8cm)</option>
+                                <option value="pimaco6085" >Pimaco 6085 (Gabarito Exato)</option>
                             </select>
                         </div>
                     </div>
@@ -97,7 +97,7 @@
             try {
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> GERANDO DOCUMENTO...';
-                mostrarStatus('<i class="fa-solid fa-microchip mr-1"></i> Aplicando formatação do papel e gerando códigos...', 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse');
+                mostrarStatus('<i class="fa-solid fa-microchip mr-1"></i> Formatando textos na vertical e gerando códigos...', 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse');
 
                 // Variáveis de Configuração do Papel
                 let paperFormat, cols, rows, labelWidth, labelHeight, gapX, gapY, marginX, marginY, drawBorder;
@@ -123,11 +123,11 @@
                     rows = 10;
                     labelWidth = 66.7;
                     labelHeight = 25.4;
-                    gapX = 2.5;  // Espaço horizontal entre as etiquetas Pimaco
-                    gapY = 0;    // Na 6085 não há espaço vertical entre as etiquetas
-                    marginX = 5.4; // Margem esquerda da folha
-                    marginY = 12.7; // Margem superior da folha (0.5 polegadas)
-                    drawBorder = false; // SEM borda, pois a folha já vem picotada/cortada
+                    gapX = 2.5;  
+                    gapY = 0;    
+                    marginX = 5.4; 
+                    marginY = 12.7; 
+                    drawBorder = false; // SEM borda (gabarito picotado)
                 }
 
                 // Inicializa o jsPDF
@@ -140,6 +140,8 @@
                 for (let i = 0; i < qtd; i++) {
                     let numCaixa = inicio + i;
                     let strNum = String(numCaixa).padStart(4, '0'); // Ex: "0001"
+                    // Dá aquele espaçamento legal entre os números, sem rotacioná-los
+                    let numEspacado = strNum.split('').join('  '); 
 
                     let x = marginX + (currentCol * labelWidth) + (currentCol * gapX);
                     let y = marginY + (currentRow * labelHeight) + (currentRow * gapY);
@@ -154,35 +156,37 @@
                         doc.setLineWidth(0.2); 
                     }
 
-                    // Configurações Específicas de Layout (Textos e Código) dependendo do Papel
                     if (tipoPapel === 'a4') {
-                        // Layout 75x18 mm
+                        // CDEPAT (Rotacionado 90 graus CCW para leitura de baixo para cima)
                         doc.setFontSize(8);
                         doc.setFont("helvetica", "bold");
-                        doc.text("CDEPAT", x + 5, y + 6, { align: "left" });
+                        doc.text("CDEPAT", x + 4, y + labelHeight - 3, { angle: 90 });
 
-                        doc.setFontSize(10);
-                        doc.setFont("helvetica", "normal");
-                        doc.text(`Caixa: ${strNum}`, x + 5, y + 13, { align: "left" });
+                        // Número Espaçado (EM PÉ / Upright) - Sem rotação
+                        doc.setFontSize(14);
+                        doc.setFont("helvetica", "bold");
+                        doc.text(numEspacado, x + 10, y + 11.5);
 
+                        // Código de Barras (Horizontal, à Direita)
                         JsBarcode(canvas, strNum, { format: "CODE128", displayValue: false, margin: 0, width: 4, height: 40 });
                         const barcodeDataURL = canvas.toDataURL("image/jpeg");
-                        doc.addImage(barcodeDataURL, 'JPEG', x + labelWidth - 35 - 5, y + 3, 35, 12);
+                        doc.addImage(barcodeDataURL, 'JPEG', x + labelWidth - 35 - 3, y + 3, 35, 12);
                     
                     } else {
-                        // Layout Pimaco 6085 (66,7 x 25,4 mm)
-                        doc.setFontSize(9);
+                        // Layout Pimaco 6085
+                        doc.setFontSize(10);
                         doc.setFont("helvetica", "bold");
-                        doc.text("CDEPAT", x + 4, y + 10, { align: "left" });
+                        doc.text("CDEPAT", x + 5, y + labelHeight - 6, { angle: 90 });
 
-                        doc.setFontSize(11);
-                        doc.setFont("helvetica", "normal");
-                        doc.text(`Caixa: ${strNum}`, x + 4, y + 18, { align: "left" });
+                        // Número Espaçado (EM PÉ / Upright) - Sem rotação
+                        doc.setFontSize(16);
+                        doc.setFont("helvetica", "bold");
+                        doc.text(numEspacado, x + 12, y + 15);
 
-                        // Para o Pimaco, a etiqueta é um pouco mais alta e menos larga
+                        // Código de Barras
                         JsBarcode(canvas, strNum, { format: "CODE128", displayValue: false, margin: 0, width: 4, height: 40 });
                         const barcodeDataURL = canvas.toDataURL("image/jpeg");
-                        doc.addImage(barcodeDataURL, 'JPEG', x + 30, y + 6, 32, 14);
+                        doc.addImage(barcodeDataURL, 'JPEG', x + 31, y + 6, 32, 14);
                     }
 
                     // --- LÓGICA DE POSICIONAMENTO ---
@@ -192,7 +196,7 @@
                         currentRow++;
                     }
 
-                    // Se preencheu a folha inteira e ainda tem etiquetas, cria nova página
+                    // Quebra de página
                     if (currentRow >= rows && i < qtd - 1) {
                         doc.addPage();
                         currentCol = 0;
@@ -205,7 +209,7 @@
                 const nomeArquivo = tipoPapel === 'a4' ? `Etiquetas_A4_${inicio}_ate_${fim}.pdf` : `Etiquetas_Pimaco_${inicio}_ate_${fim}.pdf`;
                 doc.save(nomeArquivo);
 
-                mostrarStatus(`<i class="fa-solid fa-check-circle mr-1"></i> Sucesso! Seu PDF formatado para ${tipoPapel === 'a4' ? 'A4' : 'Pimaco 6085'} foi gerado.`, 'bg-green-50 text-green-700 border-green-200');
+                mostrarStatus(`<i class="fa-solid fa-check-circle mr-1"></i> Sucesso! Seu PDF formatado para ${tipoPapel === 'a4' ? 'A4' : 'Pimaco 6085'} com formatação exata foi gerado.`, 'bg-green-50 text-green-700 border-green-200');
 
             } catch (error) {
                 console.error(error);
