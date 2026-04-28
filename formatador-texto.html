@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Pequeno ajuste para a barra de rolagem do textarea ficar elegante */
+        /* Ajuste para a barra de rolagem do textarea ficar elegante */
         textarea::-webkit-scrollbar { width: 8px; }
         textarea::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
         textarea::-webkit-scrollbar-thumb { background: #c084fc; border-radius: 4px; }
@@ -45,20 +45,25 @@
                 </div>
             </header>
 
-            <div class="mb-4">
+            <div class="mb-4 relative">
                 <textarea id="thetext" rows="12" onkeyup="updatecounts();" onchange="updatecounts();" onfocus="updatecounts();" 
                     class="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono text-sm resize-y" 
                     placeholder="Cole seu texto aqui :)"></textarea>
+                
+                <button id="btnCopy" onclick="copytext();" class="absolute top-4 right-4 px-3 py-1.5 bg-purple-600 text-white hover:bg-purple-700 rounded text-sm font-medium transition-colors shadow-md flex items-center gap-1">
+                    <i class="fa-regular fa-copy"></i> <span>Copiar</span>
+                </button>
             </div>
 
-            <div class="flex flex-wrap gap-2 mb-8">
+            <div class="flex flex-wrap gap-2 mb-4">
                 <button onclick="cleartext();" class="px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded text-sm font-medium transition-colors border border-red-200">
                     <i class="fa-solid fa-trash-can mr-1"></i> Limpar
                 </button>
                 <button onclick="selectall();" class="px-3 py-2 bg-gray-50 text-gray-700 hover:bg-gray-200 rounded text-sm font-medium transition-colors border border-gray-200">
                     <i class="fa-solid fa-object-group mr-1"></i> Selecionar Tudo
                 </button>
-                <div class="w-px bg-gray-300 mx-2 hidden md:block"></div>
+                <div class="w-px bg-gray-300 mx-1 hidden md:block"></div>
+                
                 <button onclick="uppercase();" class="px-3 py-2 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded text-sm font-medium transition-colors border border-purple-200">
                     MAIÚSCULAS
                 </button>
@@ -70,6 +75,25 @@
                 </button>
                 <button onclick="capitalizewords();" class="px-3 py-2 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded text-sm font-medium transition-colors border border-purple-200">
                     Letra Das Palavras Maiúsculas
+                </button>
+            </div>
+
+            <div class="flex flex-wrap gap-2 mb-8">
+                <button onclick="removeExtraSpaces();" class="px-3 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded text-sm font-medium transition-colors border border-blue-200" title="Remove espaços duplicados e espaços nas bordas">
+                    <i class="fa-solid fa-text-width mr-1"></i> Remover Espaços Extras
+                </button>
+                <button onclick="removeEmptyLines();" class="px-3 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded text-sm font-medium transition-colors border border-blue-200">
+                    <i class="fa-solid fa-bars-staggered mr-1"></i> Remover Linhas Vazias
+                </button>
+                <button onclick="removeAccents();" class="px-3 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded text-sm font-medium transition-colors border border-blue-200">
+                    <i class="fa-solid fa-a mr-1"></i> Remover Acentos
+                </button>
+                <div class="w-px bg-gray-300 mx-1 hidden md:block"></div>
+                <button onclick="sortLines(true);" class="px-3 py-2 bg-teal-50 text-teal-700 hover:bg-teal-100 rounded text-sm font-medium transition-colors border border-teal-200">
+                    <i class="fa-solid fa-arrow-down-a-z mr-1"></i> Ordenar A-Z
+                </button>
+                <button onclick="sortLines(false);" class="px-3 py-2 bg-teal-50 text-teal-700 hover:bg-teal-100 rounded text-sm font-medium transition-colors border border-teal-200">
+                    <i class="fa-solid fa-arrow-down-z-a mr-1"></i> Ordenar Z-A
                 </button>
             </div>
 
@@ -129,6 +153,62 @@
     </div>
 
     <script>
+        // --- FUNÇÕES NOVAS ---
+
+        function copytext() {
+            var t = document.getElementById("thetext");
+            if (!t.value) return;
+            
+            navigator.clipboard.writeText(t.value).then(() => {
+                const btn = document.getElementById("btnCopy");
+                const originalHtml = btn.innerHTML;
+                btn.classList.remove('bg-purple-600', 'hover:bg-purple-700');
+                btn.classList.add('bg-green-600', 'hover:bg-green-700');
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> <span>Copiado!</span>';
+                
+                setTimeout(() => {
+                    btn.classList.add('bg-purple-600', 'hover:bg-purple-700');
+                    btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                    btn.innerHTML = originalHtml;
+                }, 2000);
+            });
+        }
+
+        function removeExtraSpaces() {
+            var t = document.getElementById("thetext");
+            // Remove espaços duplos e trim no inicio/fim de cada linha
+            t.value = t.value.replace(/[ \t]+/g, ' ').replace(/^ | $/gm, '');
+            updatecounts();
+        }
+
+        function removeEmptyLines() {
+            var t = document.getElementById("thetext");
+            // Remove linhas vazias ou contendo apenas espaços
+            t.value = t.value.replace(/^(?=\n)$|^\s*|\s*$|\n\n+/gm, '\n').replace(/^\n|\n$/g, '');
+            updatecounts();
+        }
+
+        function removeAccents() {
+            var t = document.getElementById("thetext");
+            // Normaliza o texto e remove caracteres diacríticos
+            t.value = t.value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            updatecounts();
+        }
+
+        function sortLines(asc) {
+            var t = document.getElementById("thetext");
+            if(!t.value) return;
+            
+            var lines = t.value.split('\n');
+            lines.sort((a, b) => {
+                return asc ? a.localeCompare(b) : b.localeCompare(a);
+            });
+            t.value = lines.join('\n');
+            updatecounts();
+        }
+
+        // --- FUNÇÕES ORIGINAIS ---
+
         function cleartext() {
             var t = document.getElementById("thetext");
             t.value = '';
@@ -145,7 +225,7 @@
         function updatetextlength() {
             var t = document.getElementById("thetext");
             var c = document.getElementById("characters");
-            c.value = t.value.length + ' chars';
+            c.value = t.value.length ;
         }
 
         function updatewords() {
@@ -153,7 +233,7 @@
             var char_count = t.value.length;
             
             if (char_count === 0) {
-                document.getElementById("words").value = '0 words';
+                document.getElementById("words").value = '0';
                 return;
             }
 
@@ -166,7 +246,7 @@
             var word_count = splitString.length - 1;
 
             var w = document.getElementById("words");
-            w.value = word_count + ' words';
+            w.value = word_count ;
         }
 
         function updatecounts() {
