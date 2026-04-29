@@ -47,12 +47,17 @@
 
             <div class="mb-4 relative">
                 <textarea id="thetext" rows="12" onkeyup="updatecounts();" onchange="updatecounts();" onfocus="updatecounts();" 
-                    class="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono text-sm resize-y" 
+                    class="w-full p-4 pt-14 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono text-sm resize-y" 
                     placeholder="Cole seu texto aqui :)"></textarea>
                 
-                <button id="btnCopy" onclick="copytext();" class="absolute top-4 right-4 px-3 py-1.5 bg-purple-600 text-white hover:bg-purple-700 rounded text-sm font-medium transition-colors shadow-md flex items-center gap-1">
-                    <i class="fa-regular fa-copy"></i> <span>Copiar</span>
-                </button>
+                <div class="absolute top-4 right-4 flex gap-2">
+                    <button id="btnCopy" onclick="copytext();" class="px-3 py-1.5 bg-purple-600 text-white hover:bg-purple-700 rounded text-sm font-medium transition-colors shadow-md flex items-center gap-1">
+                        <i class="fa-regular fa-copy"></i> <span>Copiar</span>
+                    </button>
+                    <button id="btnCsv" onclick="downloadCSV();" class="px-3 py-1.5 bg-green-600 text-white hover:bg-green-700 rounded text-sm font-medium transition-colors shadow-md flex items-center gap-1">
+                        <i class="fa-solid fa-file-csv"></i> <span>Salvar CSV</span>
+                    </button>
+                </div>
             </div>
 
             <div class="flex flex-wrap gap-2 mb-4">
@@ -153,7 +158,41 @@
     </div>
 
     <script>
-        // --- FUNÇÕES NOVAS ---
+        // --- FUNÇÕES DE EXPORTAÇÃO ---
+
+        function downloadCSV() {
+            var t = document.getElementById("thetext");
+            if (!t.value) {
+                alert("Não há texto para salvar!");
+                return;
+            }
+
+            // Adiciona o BOM (\ufeff) para o Excel reconhecer os acentos corretamente
+            const blob = new Blob(["\ufeff" + t.value], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+
+            link.href = url;
+            link.download = "texto_formatado.csv";
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            // Efeito visual de sucesso no botão
+            const btn = document.getElementById("btnCsv");
+            const originalHtml = btn.innerHTML;
+            btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            btn.classList.add('bg-teal-600', 'hover:bg-teal-700');
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> <span>Salvo!</span>';
+            
+            setTimeout(() => {
+                btn.classList.add('bg-green-600', 'hover:bg-green-700');
+                btn.classList.remove('bg-teal-600', 'hover:bg-teal-700');
+                btn.innerHTML = originalHtml;
+            }, 2000);
+        }
 
         function copytext() {
             var t = document.getElementById("thetext");
@@ -174,23 +213,22 @@
             });
         }
 
+        // --- FUNÇÕES DE LIMPEZA E FORMATAÇÃO ---
+
         function removeExtraSpaces() {
             var t = document.getElementById("thetext");
-            // Remove espaços duplos e trim no inicio/fim de cada linha
             t.value = t.value.replace(/[ \t]+/g, ' ').replace(/^ | $/gm, '');
             updatecounts();
         }
 
         function removeEmptyLines() {
             var t = document.getElementById("thetext");
-            // Remove linhas vazias ou contendo apenas espaços
             t.value = t.value.replace(/^(?=\n)$|^\s*|\s*$|\n\n+/gm, '\n').replace(/^\n|\n$/g, '');
             updatecounts();
         }
 
         function removeAccents() {
             var t = document.getElementById("thetext");
-            // Normaliza o texto e remove caracteres diacríticos
             t.value = t.value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             updatecounts();
         }
@@ -225,7 +263,7 @@
         function updatetextlength() {
             var t = document.getElementById("thetext");
             var c = document.getElementById("characters");
-            c.value = t.value.length ;
+            c.value = t.value.length + ' chars';
         }
 
         function updatewords() {
@@ -233,7 +271,7 @@
             var char_count = t.value.length;
             
             if (char_count === 0) {
-                document.getElementById("words").value = '0';
+                document.getElementById("words").value = '0 words';
                 return;
             }
 
@@ -246,7 +284,7 @@
             var word_count = splitString.length - 1;
 
             var w = document.getElementById("words");
-            w.value = word_count ;
+            w.value = word_count + ' words';
         }
 
         function updatecounts() {
