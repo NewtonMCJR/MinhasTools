@@ -87,7 +87,7 @@
                 <button onclick="removeExtraSpaces();" class="px-3 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded text-sm font-medium transition-colors border border-blue-200" title="Remove espaços duplicados e espaços nas bordas">
                     <i class="fa-solid fa-text-width mr-1"></i> Remover Espaços Extras
                 </button>
-                <button onclick="removeEmptyLines();" class="px-3 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded text-sm font-medium transition-colors border border-blue-200">
+                <button onclick="removeEmptyLines();" class="px-3 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded text-sm font-medium transition-colors border border-blue-200" >
                     <i class="fa-solid fa-bars-staggered mr-1"></i> Remover Linhas Vazias
                 </button>
                 <button onclick="removeAccents();" class="px-3 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded text-sm font-medium transition-colors border border-blue-200">
@@ -222,10 +222,15 @@
         }
 
         function removeEmptyLines() {
-            var t = document.getElementById("thetext");
-            t.value = t.value.replace(/^(?=\n)$|^\s*|\s*$|\n\n+/gm, '\n').replace(/^\n|\n$/g, '');
-            updatecounts();
-        }
+    var t = document.getElementById("thetext");
+    
+    if (!t.value) return;
+
+    // Divide o texto em linhas, filtra (removendo as vazias ou só com espaços) e junta de novo
+    t.value = t.value.split('\n').filter(linha => linha.trim() !== '').join('\n');
+    
+    updatecounts();
+}
 
         function removeAccents() {
             var t = document.getElementById("thetext");
@@ -263,7 +268,7 @@
         function updatetextlength() {
             var t = document.getElementById("thetext");
             var c = document.getElementById("characters");
-            c.value = t.value.length + ' chars';
+            c.value = t.value.length ;
         }
 
         function updatewords() {
@@ -271,7 +276,7 @@
             var char_count = t.value.length;
             
             if (char_count === 0) {
-                document.getElementById("words").value = '0 words';
+                document.getElementById("words").value = '0';
                 return;
             }
 
@@ -284,7 +289,7 @@
             var word_count = splitString.length - 1;
 
             var w = document.getElementById("words");
-            w.value = word_count + ' words';
+            w.value = word_count;
         }
 
         function updatecounts() {
