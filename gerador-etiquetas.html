@@ -24,13 +24,13 @@
                 </div>
                 <div>
                     <h1 class="text-2xl font-black text-gray-800 tracking-tight">Gerador de Etiquetas</h1>
-                    <p class="text-amber-600 font-bold uppercase text-xs tracking-widest mt-1">CDEPAT • Código de Barras (Lombada Vertical)</p>
+                    <p class="text-amber-600 font-bold uppercase text-xs tracking-widest mt-1">Código de Barras (Lombada Vertical)</p>
                     <p class="text-sm text-gray-500 mt-2">Gere o PDF das etiquetas. Numeração em pé (upright) e espaçada para leitura em caixas acondicionadas como livros.</p>
                 </div>
             </header>
 
             <div class="space-y-6">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-gray-50 p-6 rounded-xl border border-gray-200">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-6 rounded-xl border border-gray-200">
                     
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-2 ml-1" for="tipoPapel">Tipo de Papel/Formato:</label>
@@ -40,8 +40,30 @@
                             </div>
                             <select id="tipoPapel" class="w-full pl-10 p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 transition-all outline-none font-mono text-sm text-gray-700 shadow-sm appearance-none">
                                 <option value="a4" selected>Folha A4 Lisa (7,5x1,8cm)</option>
-                                <option value="pimaco6085" >Pimaco 6085 (Gabarito Exato)</option>
+                                <option value="pimaco6085">Pimaco 6085 (Gabarito Exato)</option>
                             </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-2 ml-1" for="colecao">Coleção:</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fa-solid fa-folder-open text-gray-400"></i>
+                            </div>
+                            <select id="colecao" onchange="toggleColecaoOutro()" class="w-full pl-10 p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 transition-all outline-none font-mono text-sm text-gray-700 shadow-sm appearance-none">
+                                <option value="CDEPAT" selected>CDEPAT</option>
+                                <option value="CFA">CFA</option>
+                                <option value="CSAP">CSAP</option>
+                                <option value="OUTRO">Outro (Especificar...)</option>
+                            </select>
+                        </div>
+                        <div id="divColecaoOutro" class="relative mt-2 hidden transition-all">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fa-solid fa-pen text-gray-400"></i>
+                            </div>
+                            <input type="text" id="colecaoOutro" placeholder="Sigla (Máx 12 letras)" maxlength="12"
+                                class="w-full pl-10 p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 transition-all outline-none font-mono text-sm text-gray-700 shadow-sm uppercase">
                         </div>
                     </div>
 
@@ -81,16 +103,40 @@
     <canvas id="barcodeCanvas" style="display: none;"></canvas>
 
     <script>
+        // Função para mostrar/esconder o campo customizado de coleção
+        function toggleColecaoOutro() {
+            const select = document.getElementById('colecao');
+            const divOutro = document.getElementById('divColecaoOutro');
+            
+            if (select.value === 'OUTRO') {
+                divOutro.classList.remove('hidden');
+                document.getElementById('colecaoOutro').focus();
+            } else {
+                divOutro.classList.add('hidden');
+            }
+        }
+
         async function gerarEtiquetas() {
             const tipoPapel = document.getElementById('tipoPapel').value;
             const inicio = parseInt(document.getElementById('numInicio').value);
             const qtd = parseInt(document.getElementById('qtdEtiquetas').value);
+            const selectColecao = document.getElementById('colecao').value;
             const btn = document.getElementById('btnProcessar');
             const canvas = document.getElementById('barcodeCanvas');
+
+            // Determina qual é o texto da coleção a ser impresso
+            let textoColecao = selectColecao;
+            if (selectColecao === 'OUTRO') {
+                textoColecao = document.getElementById('colecaoOutro').value.trim().toUpperCase();
+            }
 
             // Validações
             if (isNaN(inicio) || isNaN(qtd) || inicio < 1 || qtd < 1) {
                 mostrarStatus('<i class="fa-solid fa-circle-exclamation mr-1"></i> Preencha valores válidos para o Início e a Quantidade.', 'bg-red-50 text-red-700 border-red-200');
+                return;
+            }
+            if (textoColecao === '') {
+                mostrarStatus('<i class="fa-solid fa-circle-exclamation mr-1"></i> Por favor, digite a sigla da coleção customizada.', 'bg-red-50 text-red-700 border-red-200');
                 return;
             }
 
@@ -157,10 +203,10 @@
                     }
 
                     if (tipoPapel === 'a4') {
-                        // CDEPAT (Rotacionado 90 graus CCW para leitura de baixo para cima)
+                        // NOME DA COLEÇÃO DINÂMICA (Rotacionado 90 graus CCW para leitura de baixo para cima)
                         doc.setFontSize(8);
                         doc.setFont("helvetica", "bold");
-                        doc.text("CDEPAT", x + 4, y + labelHeight - 3, { angle: 90 });
+                        doc.text(textoColecao, x + 4, y + labelHeight - 3, { angle: 90 });
 
                         // Número Espaçado (EM PÉ / Upright) - Sem rotação
                         doc.setFontSize(14);
@@ -176,7 +222,7 @@
                         // Layout Pimaco 6085
                         doc.setFontSize(10);
                         doc.setFont("helvetica", "bold");
-                        doc.text("CDEPAT", x + 5, y + labelHeight - 6, { angle: 90 });
+                        doc.text(textoColecao, x + 5, y + labelHeight - 6, { angle: 90 });
 
                         // Número Espaçado (EM PÉ / Upright) - Sem rotação
                         doc.setFontSize(16);
@@ -206,10 +252,15 @@
 
                 // Salva o documento
                 const fim = inicio + qtd - 1;
-                const nomeArquivo = tipoPapel === 'a4' ? `Etiquetas_A4_${inicio}_ate_${fim}.pdf` : `Etiquetas_Pimaco_${inicio}_ate_${fim}.pdf`;
+                // O nome do arquivo salvo agora carrega o nome da coleção pra ajudar a organizar!
+                const nomeSeguro = textoColecao.replace(/[^A-Z0-9]/ig, "_");
+                const nomeArquivo = tipoPapel === 'a4' 
+                    ? `Etiquetas_${nomeSeguro}_A4_${inicio}_ate_${fim}.pdf` 
+                    : `Etiquetas_${nomeSeguro}_Pimaco_${inicio}_ate_${fim}.pdf`;
+                
                 doc.save(nomeArquivo);
 
-                mostrarStatus(`<i class="fa-solid fa-check-circle mr-1"></i> Sucesso! Seu PDF formatado para ${tipoPapel === 'a4' ? 'A4' : 'Pimaco 6085'} com formatação exata foi gerado.`, 'bg-green-50 text-green-700 border-green-200');
+                mostrarStatus(`<i class="fa-solid fa-check-circle mr-1"></i> Sucesso! Seu PDF da coleção <b>${textoColecao}</b> foi gerado.`, 'bg-green-50 text-green-700 border-green-200');
 
             } catch (error) {
                 console.error(error);
